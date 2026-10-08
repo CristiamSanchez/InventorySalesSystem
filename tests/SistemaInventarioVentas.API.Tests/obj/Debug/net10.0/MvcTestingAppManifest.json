@@ -1,0 +1,6 @@
+{
+  "SistemaInventarioVentas.API, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/cristiamsanchez\/Documents\/VSCodeProjects\/SistemaInventarioVentas\/src\/SistemaInventarioVentas.API",
+  "SistemaInventarioVentas.Application, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/cristiamsanchez\/Documents\/VSCodeProjects\/SistemaInventarioVentas\/src\/SistemaInventarioVentas.Application",
+  "SistemaInventarioVentas.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/cristiamsanchez\/Documents\/VSCodeProjects\/SistemaInventarioVentas\/src\/SistemaInventarioVentas.Domain",
+  "SistemaInventarioVentas.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/cristiamsanchez\/Documents\/VSCodeProjects\/SistemaInventarioVentas\/src\/SistemaInventarioVentas.Infrastructure"
+}

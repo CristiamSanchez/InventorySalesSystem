@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SistemaInventarioVentas.API</name>
+    </assembly>
+    <members>
+        <member name="T:SistemaInventarioVentas.API.Contracts.RegisterRequest">
+            <summary>Credentials and profile information required to register a user.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.RegisterResponse">
+            <summary>Result of registering a user account.</summary>
+        </member>
+        <member name="M:SistemaInventarioVentas.API.Contracts.RegisterResponse.#ctor(System.Guid,System.Boolean)">
+            <summary>Result of registering a user account.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.LoginRequest">
+            <summary>Email and password submitted to authenticate a user.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.LoginResponse">
+            <summary>Bearer access token returned after successful authentication.</summary>
+        </member>
+        <member name="M:SistemaInventarioVentas.API.Contracts.LoginResponse.#ctor(System.String,System.String,System.DateTimeOffset)">
+            <summary>Bearer access token returned after successful authentication.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.CurrentUserResponse">
+            <summary>Identity and roles associated with the authenticated caller.</summary>
+        </member>
+        <member name="M:SistemaInventarioVentas.API.Contracts.CurrentUserResponse.#ctor(System.Guid,System.Collections.Generic.IReadOnlyCollection{System.String})">
+            <summary>Identity and roles associated with the authenticated caller.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.CreateCategoryRequest">
+            <summary>Request to create a category.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.CreateCategoryRequest.Name">
+            <summary>The category name.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.UpdateCategoryRequest">
+            <summary>Request to update a category.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.UpdateCategoryRequest.Name">
+            <summary>The category name.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.UpdateCategoryRequest.IsActive">
+            <summary>Whether the category is available for new products.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.CreateProductRequest">
+            <summary>Request to create a product.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.CreateProductRequest.Identifier">
+            <summary>The unique product identifier.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.CreateProductRequest.Name">
+            <summary>The product name.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.CreateProductRequest.CategoryId">
+            <summary>The category to which the product belongs.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.UpdateProductRequest">
+            <summary>Request to update a product.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.UpdateProductRequest.Name">
+            <summary>The product name.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.UpdateProductRequest.CategoryId">
+            <summary>The product's category.</summary>
+        </member>
+        <member name="P:SistemaInventarioVentas.API.Contracts.UpdateProductRequest.IsActive">
+            <summary>Whether the product is active.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.CategoryResponse">
+            <summary>A category representation returned by the API.</summary>
+        </member>
+        <member name="M:SistemaInventarioVentas.API.Contracts.CategoryResponse.#ctor(System.Guid,System.String,System.Boolean,System.Collections.Generic.IReadOnlyList{SistemaInventarioVentas.API.Contracts.ProductSummaryResponse})">
+            <summary>A category representation returned by the API.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.ProductSummaryResponse">
+            <summary>A product summary nested in a category response.</summary>
+        </member>
+        <member name="M:SistemaInventarioVentas.API.Contracts.ProductSummaryResponse.#ctor(System.String,System.String,System.Boolean)">
+            <summary>A product summary nested in a category response.</summary>
+        </member>
+        <member name="T:SistemaInventarioVentas.API.Contracts.ProductResponse">
+            <summary>A product representation returned by the API.</summary>
+        </member>
+        <member name="M:SistemaInventarioVentas.API.Contracts.ProductResponse.#ctor(System.String,System.String,System.Guid,System.String,System.Boolean)">
+            <summary>A product representation returned by the API.</summary>
+        </member>
+        <member name="T:Program">
+            <summary>Exposes the entry point to the API integration-test host.</summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Type)">
+            <summary>
+            Generates a documentation comment ID for a type.
+            Example: T:Namespace.Outer+Inner`1 becomes T:Namespace.Outer.Inner`1
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Reflection.PropertyInfo)">
+            <summary>
+            Generates a documentation comment ID for a property.
+            Example: P:Namespace.ContainingType.PropertyName or for an indexer P:Namespace.ContainingType.Item(System.Int32)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Type,System.String)">
+            <summary>
+            Generates a documentation comment ID for a property given its container type and property name.
+            Example: P:Namespace.ContainingType.PropertyName
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Reflection.MethodInfo)">
+            <summary>
+            Generates a documentation comment ID for a method (or constructor).
+            For example:
+              M:Namespace.ContainingType.MethodName(ParamType1,ParamType2)~ReturnType
+              M:Namespace.ContainingType.#ctor(ParamType)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.GetTypeDocId(System.Type,System.Boolean,System.Boolean)">
+            <summary>
+            Generates a documentation ID string for a type.
+            This method handles nested types (replacing '+' with '.'),
+            generic types, arrays, pointers, by-ref types, and generic parameters.
+            The <paramref name="includeGenericArguments"/> flag controls whether
+            constructed generic type arguments are emitted, while <paramref name="omitGenericArity"/>
+            controls whether the generic arity marker (e.g. "`1") is appended.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.NormalizeDocId(System.String)">
+            <summary>
+            Normalizes a documentation comment ID to match the compiler-style format.
+            Strips the return type suffix for ordinary methods but retains it for conversion operators.
+            </summary>
+            <param name="docId">The documentation comment ID to normalize.</param>
+            <returns>The normalized documentation comment ID.</returns>
+        </member>
+    </members>
+</doc>

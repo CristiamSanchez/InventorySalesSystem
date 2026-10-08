@@ -1,0 +1,5 @@
+{
+    "chat.planAgent.defaultModel": "DeepSeek V4 Flash (deepseek)",
+    "inlineChat.defaultModel": "Auto (copilot)",
+    "chat.disableAIFeatures": false
+}

@@ -1,0 +1,34 @@
+@baseUrl = http://localhost:5008
+@accessToken = replace-with-the-token-returned-by-login
+
+### Register an account (new accounts are inactive until activated)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Inventory User",
+  "email": "inventory.user@example.com",
+  "password": "Use-a-local-test-password"
+}
+
+### Log in as an active account
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "inventory.user@example.com",
+  "password": "Use-a-local-test-password"
+}
+
+### Get the identity associated with the access token
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Invalid credentials return a generic authentication failure
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "unknown@example.com",
+  "password": "incorrect-password"
+}

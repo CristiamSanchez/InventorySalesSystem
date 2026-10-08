@@ -1,0 +1,11 @@
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/bin/Debug/net10.0/SistemaInventarioVentas.Domain.deps.json
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/bin/Debug/net10.0/SistemaInventarioVentas.Domain.dll
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/bin/Debug/net10.0/SistemaInventarioVentas.Domain.pdb
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/SistemaInventarioVentas.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/SistemaInventarioVentas.Domain.AssemblyInfoInputs.cache
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/SistemaInventarioVentas.Domain.AssemblyInfo.cs
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/SistemaInventarioVentas.Domain.csproj.CoreCompileInputs.cache
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/SistemaInventarioVentas.Domain.dll
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/refint/SistemaInventarioVentas.Domain.dll
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/SistemaInventarioVentas.Domain.pdb
+/home/cristiamsanchez/Documents/VSCodeProjects/SistemaInventarioVentas/src/SistemaInventarioVentas.Domain/obj/Debug/net10.0/ref/SistemaInventarioVentas.Domain.dll

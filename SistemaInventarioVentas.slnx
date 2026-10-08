@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SistemaInventarioVentas.API/SistemaInventarioVentas.API.csproj" />
+    <Project Path="src/SistemaInventarioVentas.Application/SistemaInventarioVentas.Application.csproj" />
+    <Project Path="src/SistemaInventarioVentas.Domain/SistemaInventarioVentas.Domain.csproj" />
+    <Project Path="src/SistemaInventarioVentas.Infrastructure/SistemaInventarioVentas.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SistemaInventarioVentas.API.Tests/SistemaInventarioVentas.API.Tests.csproj" />
+    <Project Path="tests/SistemaInventarioVentas.Application.Tests/SistemaInventarioVentas.Application.Tests.csproj" />
+    <Project Path="tests/SistemaInventarioVentas.Domain.Tests/SistemaInventarioVentas.Domain.Tests.csproj" />
+    <Project Path="tests/SistemaInventarioVentas.Infrastructure.Tests/SistemaInventarioVentas.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
