@@ -102,8 +102,11 @@ Completed Phase 9.5 — Final Release, Commit, and GitHub Publication:
   - Git diff formatting (`git diff --check` and `git diff --cached --check`): PASS (0 whitespace/formatting errors).
 - Staging & Release Commit:
   - Staged all verified source code, migrations, tests, documentation, containerization profiles, and frontend assets while preserving the 1,012 staged build-artifact deletions.
-  - Authored official release commit: `feat(release): prepare inventory and sales system for public portfolio`.
+  - Authored official release commit: `feat(release): prepare inventory and sales system for public portfolio` (`747594e`).
+  - Adapted inventory concurrency unit tests for low-core virtual runner scheduling (`8b0cc12`).
   - Pushed to `origin main` synchronizing local branch with GitHub remote.
+- Remote CI Pipeline Validation:
+  - Verified GitHub Actions workflow run `39895585030` on `main`: both `Frontend Build & Tests (Angular 22)` and `Backend Build & Tests (.NET 10)` passed with conclusion `success`.
 - Documentation & State Record:
   - Appended Decision 54 to `docs/decision-log.md`.
   - Updated `docs/project-state.md` to mark Phase 9.5 Completed.
