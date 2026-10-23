@@ -20,6 +20,12 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IPasswordHasher, AspNetPasswordHasher>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IInventoryRepository, InventoryRepository>();
+        services.AddScoped<ISaleRepository, SaleRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<ISupplierRepository, SupplierRepository>();
+        services.AddScoped<IAuditRepository, AuditRepository>();
+        services.AddScoped<IReportingRepository, ReportingRepository>();
         return services;
     }
 }

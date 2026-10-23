@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: sistema-inventario-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-inventario}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-inventario}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: src/SistemaInventarioVentas.API/Dockerfile
+    container_name: sistema-inventario-api
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__InventoryDatabase: Host=db;Port=5432;Database=${POSTGRES_DB:-inventario};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      Authentication__Jwt__Issuer: ${Authentication__Jwt__Issuer:-SistemaInventarioVentas.API}
+      Authentication__Jwt__Audience: ${Authentication__Jwt__Audience:-SistemaInventarioVentas.Client}
+      Authentication__Jwt__SigningKey: ${Authentication__Jwt__SigningKey:-your_at_least_32_bytes_super_secret_jwt_key_here!}
+      Authentication__Jwt__AccessTokenLifetimeMinutes: ${Authentication__Jwt__AccessTokenLifetimeMinutes:-15}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_HTTP_PORTS: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sistema-inventario-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

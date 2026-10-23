@@ -8,5 +8,9 @@ public enum ApplicationErrorCode
     ProductIdentifierConflict,
     InactiveCategory,
     CategoryInUse,
-    UserEmailConflict
+    UserEmailConflict,
+    InsufficientStock,
+    ConcurrencyConflict,
+    CustomerIdentificationConflict,
+    SupplierIdentificationConflict
 }

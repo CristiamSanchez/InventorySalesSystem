@@ -15,7 +15,13 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddScoped<CategoryUseCases>();
 builder.Services.AddScoped<ProductUseCases>();
+builder.Services.AddScoped<InventoryUseCases>();
+builder.Services.AddScoped<SaleUseCases>();
+builder.Services.AddScoped<CustomerUseCases>();
+builder.Services.AddScoped<SupplierUseCases>();
 builder.Services.AddScoped<UserAuthenticationUseCases>();
+builder.Services.AddScoped<AuditUseCases>();
+builder.Services.AddScoped<ReportingUseCases>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 
@@ -75,6 +81,12 @@ if (app.Environment.IsDevelopment())
 app.MapAuthentication();
 app.MapCategories();
 app.MapProducts();
+app.MapInventory();
+app.MapSales();
+app.MapCustomers();
+app.MapSuppliers();
+app.MapAudit();
+app.MapReports();
 
 app.Run();
 

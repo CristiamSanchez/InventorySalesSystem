@@ -58,46 +58,75 @@ This document defines the conceptual domain model for the inventory and sales ma
 
 - Name: Supplier
 - Purpose: Represent the external source of stock and product supply.
-- Business meaning: A supplier is the business partner that provides products or stock to the company.
+- Business meaning: A supplier is the business partner, vendor, or manufacturer that provides products or stock to the company.
 - Main responsibilities:
-  - maintain supplier identity and business contact data
-  - support supply visibility and traceability
-  - preserve historical supplier context for stock movements
+  - maintain supplier identity, company/commercial name, contact person, and optional contact information
+  - provide an authoritative supplier identity (`Id`) for incoming inventory operations, supplier consultations, and future purchasing workflows
+  - govern supplier active/inactive status to prevent discontinued or suspended vendors from being used in new inventory entries
+  - preserve supplier history and source traceability over time without losing past operational context
 - Important attributes/concepts:
-  - supplier identifier
-  - supplier name
-  - business contact information
-  - active/inactive status
+  - `Id`: unique supplier identifier (`Guid`)
+  - `Name`: required commercial or corporate supplier name (`string`, 1–200 characters, trimmed)
+  - `ContactName`: optional contact representative / sales agent name (`string?`, max 200 characters, trimmed)
+  - `IdentificationNumber`: optional tax ID, fiscal registration code, or commercial identifier (`string?`, max 50 characters, trimmed, uppercase normalized, unique across suppliers when provided)
+  - `Email`: optional contact email address (`EmailAddress?`, max 320 characters, lowercase normalized, validated format using domain value object)
+  - `Phone`: optional contact telephone number (`string?`, max 30 characters, trimmed)
+  - `Address`: optional warehouse or fiscal address (`string?`, max 300 characters, trimmed)
+  - `IsActive`: supplier status flag (`bool`, defaults to `true` on creation)
+  - `CreatedAtUtc`: creation timestamp (`DateTimeOffset`)
+- Domain methods:
+  - `Supplier(name, contactName = null, identificationNumber = null, email = null, phone = null, address = null, createdAtUtc = null)`: factory/constructor for new suppliers (defaults `IsActive = true`).
+  - `Supplier(id, name, contactName, identificationNumber, email, phone, address, isActive, createdAtUtc)`: complete constructor for reconstituting entity state.
+  - `UpdateDetails(string name, string? contactName, string? identificationNumber, EmailAddress? email, string? phone, string? address)`: updates commercial and contact details with full validation.
+  - `Activate()`: activates the supplier (`IsActive = true`).
+  - `Deactivate()`: deactivates the supplier (`IsActive = false`).
 - Relationships with other concepts:
-  - one supplier can supply many products
-  - supplier records are tied to incoming inventory operations and historical stock movements
+  - one supplier can supply many products over time
+  - incoming inventory entries and future purchase receipts reference `Supplier` by value (`SupplierId: Guid?`) while preserving the supplier's name snapshot in the movement/receipt reference for historical immutability
+  - products do not require a mandatory supplier link to exist in the catalog; supplier-product sourcing relationships belong to transactional inventory entries and future purchasing workflows
+  - supplier deactivation never removes historical inventory movements or product sourcing records
 - Important business rules:
-  - supplier identity must be unambiguous
-  - supplier status must be preserved even when the supplier becomes inactive
-  - supplier data must remain available for historical review
+  - a supplier must have a valid non-empty corporate/commercial name (BR-SUP-001)
+  - identification number, when supplied, must be unique across suppliers (case-insensitively) to prevent duplicate vendor accounts and ambiguous source tracking (BR-SUP-002)
+  - contact information (contact name, email, phone, address) is optional to accommodate informal or local suppliers, but must be normalized and validated whenever supplied (BR-SUP-005)
+  - inactive suppliers cannot be used for recording new inventory entries or future purchase receipts (BR-SUP-003)
+  - supplier history remains permanently available and immutable; suppliers associated with historical inventory entries must never be deleted from the system (BR-SUP-004)
 
 ### 4. Customer
 
 - Name: Customer
-- Purpose: Represent the business counterpart that purchases products from the company.
-- Business meaning: A customer is a party associated with sales transactions and sales history.
+- Purpose: Represent the commercial counterpart that purchases products from the company.
+- Business meaning: A customer is the entity associated with sales transactions, receivables, and historical commercial records.
 - Main responsibilities:
-  - maintain customer identity and contact information
-  - support sales processing and customer lookup
-  - retain customer history over time
+  - maintain customer identity, commercial name, and optional contact information
+  - provide an authoritative customer identity (`Id`) for sales transactions and sales history querying
+  - govern customer active/inactive status to prevent inactive customers from being used in new sales
+  - preserve customer history and commercial continuity over time
 - Important attributes/concepts:
-  - customer identifier
-  - customer details
-  - active/inactive status
-  - sales history
+  - `Id`: unique customer identifier (`Guid`)
+  - `Name`: required commercial or legal customer name (`string`, 1–200 characters, trimmed)
+  - `IdentificationNumber`: optional tax ID, national ID, or commercial identification code (`string?`, max 50 characters, trimmed, uppercase normalized, unique across customers when provided)
+  - `Email`: optional contact email address (`EmailAddress?`, max 320 characters, lowercase normalized, validated format)
+  - `Phone`: optional contact telephone number (`string?`, max 30 characters, trimmed)
+  - `Address`: optional physical or billing address (`string?`, max 300 characters, trimmed)
+  - `IsActive`: customer status flag (`bool`, defaults to `true` on creation)
+  - `CreatedAtUtc`: creation timestamp (`DateTimeOffset`)
+- Domain methods:
+  - `Customer(name, identificationNumber = null, email = null, phone = null, address = null, createdAtUtc = null)`: factory/constructor for new customers (defaults `IsActive = true`).
+  - `Customer(id, name, identificationNumber, email, phone, address, isActive, createdAtUtc)`: complete constructor for reconstituting state.
+  - `UpdateDetails(string name, string? identificationNumber, EmailAddress? email, string? phone, string? address)`: updates commercial and contact details with full validation.
+  - `Activate()`: activates the customer (`IsActive = true`).
+  - `Deactivate()`: deactivates the customer (`IsActive = false`).
 - Relationships with other concepts:
-  - one customer can have many sales
-  - each sale references a customer
-  - customer records remain linked to historical records even if customer status changes
+  - one customer can have many sales over time
+  - `Sale` references `Customer` via `CustomerId` (`Guid?`, identifier by value) while maintaining `CustomerReference` (`string`) as an immutable snapshot of the customer name at the time of sale
+  - customer deactivation never removes historical sales or movement records
 - Important business rules:
-  - customer identities must avoid duplication and ambiguity
-  - inactive customers should not be treated as valid recipients for new sales without a business exception
-  - sales history must remain connected to the correct customer record
+  - a customer must have a valid non-empty name (BR-CUST-001)
+  - identification number, when supplied, must be unique across customers to prevent duplicate customer records (BR-CUST-002)
+  - contact information (email, phone, address) is optional to accommodate counter/walk-in commerce, but must be normalized and validated whenever supplied (BR-CUST-005)
+  - inactive customers cannot be used for new sales or new draft sale associations (BR-CUST-003)
+  - sales history remains permanently tied to the customer record even if status changes or the customer is renamed (BR-CUST-004, BR-CUST-006)
 
 ### 5. Inventory
 
@@ -133,20 +162,25 @@ This document defines the conceptual domain model for the inventory and sales ma
   - preserve chronology and accountability of stock history
   - support reconciliation and audit review
 - Important attributes/concepts:
-  - product reference
-  - movement type
-  - quantity
-  - date and time
-  - associated transaction or reason
-  - responsible user
+  - `Id`: unique movement identifier (`Guid`)
+  - `ProductIdentifier`: product reference value object (`ProductIdentifier`)
+  - `MovementType`: type of movement (`Entry`, `Exit`, `Adjustment`)
+  - `Quantity`: quantity changed (`int`)
+  - `Reference`: business reference, delivery note, invoice, or adjustment reason (`string`, max 500 characters)
+  - `SupplierId`: optional registered supplier identifier (`Guid?`, identifier by value, applicable to `Entry` movements)
+  - `SupplierName`: optional commercial name snapshot of the supplier at entry time (`string?`, 1–200 characters, immutable historical snapshot)
+  - `OccurredAtUtc`: occurrence timestamp (`DateTimeOffset`)
 - Relationships with other concepts:
-  - belongs to a product
-  - may reference a sale, inventory entry, inventory exit, or adjustment
+  - belongs to `Inventory` aggregate
+  - for incoming entry movements, may reference `Supplier` via `SupplierId` while maintaining `SupplierName` as an immutable snapshot
+  - for sales-related exit movements, references `Sale` through `Reference` (`$"Sale {sale.Id}"`)
   - helps reconstruct the current inventory state over time
 - Important business rules:
   - every movement must be traceable
   - movement type and quantity must match the business action
   - movement history must remain aligned with the current inventory record
+  - incoming movements associated with a supplier must reference an active supplier and preserve the supplier commercial name snapshot at delivery time (BR-SUP-003, BR-SUP-006)
+  - suppliers associated with past inventory movements cannot be deleted (BR-SUP-004)
 
 ### 7. Sale
 
@@ -154,53 +188,69 @@ This document defines the conceptual domain model for the inventory and sales ma
 - Purpose: Represent a customer transaction that includes products sold and the commercial result of the transaction.
 - Business meaning: A sale is the key transaction of the business through which inventory is consumed and revenue is realized.
 - Main responsibilities:
-  - define the transaction context
-  - identify the customer, date, user, and status
-  - coordinate the link between sale details and stock impact
-  - preserve a valid historical record of completed sales
+  - define the transaction context and identity
+  - identify the customer, date, user, and lifecycle status
+  - encapsulate and coordinate the collection of sale detail lines
+  - maintain financial integrity: calculate subtotal, tax amount, and total from details
+  - coordinate the link between sale confirmation and warehouse stock reduction
+  - preserve a valid, immutable historical record of completed sales
 - Important attributes/concepts:
-  - sale identifier
-  - customer reference
-  - sale date/time
-  - responsible user
-  - sale status
-  - subtotal, tax, and total values
+  - `Id`: unique sale identifier (`Guid`)
+  - `CustomerId`: optional identifier of the registered customer (`Guid?`, identifier by value)
+  - `CustomerReference`: customer commercial name or business reference snapshot (`string`, required, 1–200 characters, preserves the exact customer name at the time the sale was created)
+  - `UserId`: identifier of the authenticated user responsible for the transaction (`Guid`)
+  - `CreatedAtUtc`: timestamp when the sale was created (`DateTimeOffset`)
+  - `ConfirmedAtUtc`: nullable timestamp when the sale was confirmed (`DateTimeOffset?`)
+  - `Status`: lifecycle state (`SaleStatus`: `Draft = 1`, `Confirmed = 2`, `Cancelled = 3`)
+  - `Subtotal`: sum of all line subtotals before tax (`decimal`)
+  - `TaxAmount`: sum of all line tax amounts (`decimal`)
+  - `Total`: gross sale amount (`Subtotal + TaxAmount`, `decimal`)
+  - `Details`: encapsulated collection of line items (`IReadOnlyCollection<SaleDetail>`)
 - Relationships with other concepts:
-  - belongs to a customer
-  - contains one or more sale detail records
-  - may trigger inventory reduction and movement updates
-  - is visible through sales history and audit review
+  - acts as the Aggregate Root for `SaleDetail` entities
+  - references a registered customer via `CustomerId` (optional) and always preserves `CustomerReference` snapshot
+  - references the responsible authenticated user via `UserId`
+  - on confirmation, triggers inventory reduction (`Inventory.RegisterExit`) and movement tracking (`InventoryMovement`) across each sold product
+  - visible through sales history and audit review
 - Important business rules:
-  - a sale must reference a valid customer and valid user context
-  - a sale must contain at least one valid sale detail line before confirmation
-  - confirmed sales must not leave inventory negative
-  - sale totals must remain consistent with sale detail values and tax logic
-  - sale confirmation must align to required inventory reductions and movement records
+  - a sale must reference a valid customer and valid responsible user context (BR-SALE-001, BR-USER-004)
+  - a sale must contain at least one valid sale detail line before confirmation (BR-SALE-002)
+  - sale totals and taxes must be mathematically consistent with detail lines (BR-SALE-005)
+  - confirmed sales must not leave inventory negative (BR-SALE-007, BR-INV-002)
+  - sale confirmation and inventory exit movements must be committed in a single atomic transaction (Decision 7, BR-SALE-008)
+  - once confirmed or cancelled, the sale and its details become immutable (BR-SALE-006)
 
 ### 8. Sale Detail
 
 - Name: Sale Detail
 - Purpose: Represent an individual product line within a sale.
-- Business meaning: Each sale detail captures one product sold as part of the customer transaction.
+- Business meaning: Each sale detail captures one product sold as part of the customer transaction, freezing commercial values at the time of sale.
 - Main responsibilities:
-  - connect the sale to the product sold
-  - represent quantity and commercial value of one product line
-  - contribute to tax and total calculations
+  - connect the sale to the specific catalog product sold via `ProductIdentifier`
+  - capture quantity and unit price as an immutable snapshot
+  - compute line subtotal, tax amount, and total
+  - contribute to overall sale totals and inventory consumption
 - Important attributes/concepts:
-  - sale reference
-  - product reference
-  - quantity
-  - unit price or commercial value
-  - tax treatment contribution
+  - `Id`: unique detail line identifier (`Guid`)
+  - `SaleId`: reference to the parent sale (`Guid`)
+  - `ProductIdentifier`: product business identifier value object (`ProductIdentifier`)
+  - `Quantity`: quantity sold (positive integer, `Quantity > 0`)
+  - `UnitPrice`: unit price at the time of sale snapshot (`decimal`, `UnitPrice >= 0`)
+  - `TaxRate`: applicable tax rate (e.g. `0.16m` for 16% VAT, `0.0m` for exempt; `TaxRate >= 0`)
+  - `Subtotal`: line value before tax (`Quantity * UnitPrice`, `decimal`)
+  - `TaxAmount`: tax amount for the line (`Subtotal * TaxRate`, rounded to 2 decimal places with `MidpointRounding.AwayFromZero`, `decimal`)
+  - `Total`: line total including tax (`Subtotal + TaxAmount`, `decimal`)
 - Relationships with other concepts:
-  - belongs to a sale
-  - references a product
-  - contributes to sale totals and inventory consequences
+  - belongs exclusively to a parent `Sale` aggregate root
+  - references a `Product` by `ProductIdentifier` value object
+  - maps directly to one `InventoryMovement` of type `Exit` during sale confirmation
 - Important business rules:
-  - each detail must reference a valid product
-  - quantities must be positive and valid
-  - the detail totals must align with the sale total and tax calculations
-  - stock availability must be validated before confirming the sale detail set
+  - each detail must reference a valid product identifier (BR-SALE-003)
+  - quantities must be strictly positive integers (BR-SALE-003)
+  - unit price is a point-in-time snapshot, guaranteeing historical sales remain unchanged when catalog prices fluctuate (BR-SALE-010)
+  - a sale cannot contain duplicate detail lines for the same product identifier; adding an existing product increments the line quantity (BR-SALE-011)
+  - detail subtotal, tax amount, and total must align with financial precision rules (BR-SALE-005, BR-SALE-012)
+  - stock availability must be validated for each detail before confirming the sale (BR-SALE-004)
 
 ### 9. User
 
@@ -251,25 +301,33 @@ This document defines the conceptual domain model for the inventory and sales ma
 ### 11. Audit Event
 
 - Name: Audit Event
-- Purpose: Record material changes and privileged actions for accountability.
-- Business meaning: An audit event is the evidence that a business action occurred, who performed it, and when.
+- Purpose: Record material state changes, lifecycle transitions, and privileged security actions for operational accountability and historical audit.
+- Business meaning: An audit event is an immutable business fact proving that a discrete action occurred, who or what performed it, when it happened, and what business record was affected.
 - Main responsibilities:
-  - preserve evidence of important actions
-  - support operational history and accountability review
-  - correlate activity to business objects and users
+  - preserve immutable evidence of material operational and security actions
+  - capture the responsible actor (`UserId` or system indication) and UTC occurrence timestamp
+  - link actions to specific domain aggregates and identifiers (`EntityName`, `EntityId`)
+  - record structured metadata details for review without exposing secrets
+  - guarantee non-repudiation and temporal ordering of actions
 - Important attributes/concepts:
-  - event type
-  - affected record
-  - responsible user
-  - date and time
-  - result or summary of action
+  - `Id`: unique audit event identifier (`Guid`)
+  - `EventType`: standardized action or lifecycle event name (`string`, required, 1–100 characters; e.g. `SaleCreated`, `SaleConfirmed`, `SaleCancelled`, `InventoryMovementRecorded`, `ProductActivated`, `ProductDeactivated`, `SupplierActivated`, `SupplierDeactivated`, `CustomerActivated`, `CustomerDeactivated`, `UserLoginSucceeded`, `UserLoginFailed`, `UserActivated`, `UserDeactivated`)
+  - `EntityName`: name of the domain aggregate or target category (`string`, required, 1–100 characters; e.g. `Sale`, `InventoryMovement`, `Product`, `Supplier`, `Customer`, `User`)
+  - `EntityId`: technical or business identifier of the target record (`string?`, optional/nullable, max 100 characters; null for system-wide or non-entity events such as failed login attempts)
+  - `UserId`: identifier of the authenticated user who initiated the action (`Guid?`, optional/nullable; null for system-initiated tasks or unauthenticated attempts)
+  - `OccurredAtUtc`: point-in-time timestamp when the event occurred in UTC (`DateTimeOffset`)
+  - `MetadataJson`: structured operational payload in JSON format (`string?`, max 4000 characters or text; contains event-specific facts such as quantities, totals, reasons, or sanitized client context, strictly excluding credentials)
 - Relationships with other concepts:
-  - tied to users and business records
-  - relevant to sales, inventory, and user access changes
+  - references a `User` by identifier (`UserId`), or represents system-initiated actions when `UserId` is null
+  - references business domain aggregates (`Sale`, `InventoryMovement`, `Product`, `Supplier`, `Customer`, `User`) by `EntityName` and `EntityId`
+  - created alongside operational state changes in the same atomic database transaction
+  - consumed by administrative audit queries and operational reports
 - Important business rules:
-  - key business actions must be traceable
-  - audit records must align with the actual state change they describe
-  - unauthorized events must not be hidden from the accountability trail
+  - audit records are strictly immutable: once created, they cannot be modified, edited, or deleted (BR-AUD-001, BR-AUD-002)
+  - state-modifying business actions must record an audit event within the same atomic transaction as the state change (BR-AUD-001, Decision 39)
+  - read operations must not generate audit events (BR-AUD-004, Decision 39)
+  - credentials, passwords, password hashes, JWTs, and encryption keys must never be logged in audit events or metadata (BR-AUD-005, NFR-SEC-003, NFR-OBS-003)
+  - system-initiated actions must explicitly record system provenance when `UserId` is null (BR-AUD-006)
 
 ### 12. Reporting context
 
@@ -320,14 +378,18 @@ This document defines the conceptual domain model for the inventory and sales ma
 - Product state: numeric or symbolic states such as active/inactive should be treated as finite business states.
 - Customer state: active/inactive and other relationship states should be modeled as business states rather than loose strings.
 - User state: active/inactive and authorization-related states are business states that influence access and actions.
-- Sale status: draft, confirmed, completed, cancelled, or reversed are business states with defined transitions.
-- Inventory movement type: entry, exit, adjustment, and sales-related stock change are finite movement states.
+- Sale status: finite lifecycle states (`Draft = 1`, `Confirmed = 2`, `Cancelled = 3`). `Draft` allows adding/removing items without consuming stock. `Confirmed` locks items, calculates final totals, and atomically decrements inventory via `Exit` movements. `Cancelled` is a terminal void state (reversing inventory if cancelled from `Confirmed`).
+- Inventory movement type: finite movement categories (`Entry = 1`, `Exit = 2`, `Adjustment = 3`), where sale confirmation produces `Exit` movements.
 
-### Concepts needing further analysis
+### Concepts resolved and needing further analysis
 
-- Inventory may later need more analysis to decide whether it is modeled as a separate aggregate, a derived value, or a full tracked entity.
-- Audit Event may require further analysis to determine whether it is a generic event record or a constrained set of approved action types.
-- Complex supplier and customer relationships may need additional business rules if the project expands beyond the current scope.
+- Inventory aggregate: resolved in Phase 2 as an independent aggregate root with encapsulated movements, optimistic concurrency control via PostgreSQL `xmin`, and engine-level non-negative check constraint.
+- Sales and Inventory transaction boundary: resolved as an atomic operation spanning the `Sale`, its `SaleDetail` items, all affected `Inventory` aggregate stock decrements, and their corresponding `InventoryMovement` records.
+- Concurrency protection: resolved via existing inventory OCC (`xmin`); concurrent sales competing for limited stock will trigger concurrency conflicts on commit if stock was altered concurrently, rolling back the entire sale transaction and preventing stock from dropping below zero.
+- Customer reference and Customer aggregate: planned in Phase 4.1 as an independent aggregate root (`Customer`) with hybrid sale linking (`CustomerId?` identifier reference by value plus immutable `CustomerReference` commercial name snapshot), preserving aggregate boundaries and backwards compatibility without breaking existing sales.
+- Product catalog pricing: `Product` currently has no price attribute. `SaleDetail` captures `UnitPrice` as an immutable snapshot. Whether `Product` is later extended with a default list price or prices are always supplied upon sale line creation remains an open business decision.
+- Audit Event: resolved in Phase 6.1 as an independent, append-only domain entity (`AuditEvent`) recording discrete operational and security actions across sales, inventory, entity lifecycles, and authentication. Audit records are transactionally committed with the originating state change, strictly immutable, and protected from storing credentials.
+- Complex supplier and customer relationships: may need additional business rules if the project expands beyond the current scope.
 
 ## Domain relationships
 

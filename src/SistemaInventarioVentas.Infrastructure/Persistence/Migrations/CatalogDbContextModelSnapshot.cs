@@ -22,6 +22,52 @@ namespace SistemaInventarioVentas.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.AuditEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("MetadataJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventType")
+                        .HasDatabaseName("ix_audit_events_event_type");
+
+                    b.HasIndex("OccurredAtUtc")
+                        .HasDatabaseName("ix_audit_events_occurred_at_utc");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_audit_events_user_id");
+
+                    b.HasIndex("EntityName", "EntityId")
+                        .HasDatabaseName("ix_audit_events_entity_name_entity_id");
+
+                    b.ToTable("audit_events", (string)null);
+                });
+
             modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -50,6 +96,144 @@ namespace SistemaInventarioVentas.Infrastructure.Persistence.Migrations
                     b.ToTable("categories", (string)null);
                 });
 
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("Email");
+
+                    b.Property<string>("EmailKey")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasComputedColumnSql("lower(\"Email\")", true);
+
+                    b.Property<string>("IdentificationNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("IdentificationNumberKey")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasComputedColumnSql("upper(\"IdentificationNumber\")", true);
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdentificationNumberKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_customers_identification_number_key");
+
+                    b.ToTable("customers", (string)null);
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Inventory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ProductIdentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductIdentifier")
+                        .IsUnique()
+                        .HasDatabaseName("ux_inventories_product_identifier");
+
+                    b.ToTable("inventories", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_inventories_quantity_non_negative", "\"Quantity\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.InventoryMovement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InventoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("MovementType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProductIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ProductIdentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SupplierName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryId")
+                        .HasDatabaseName("ix_inventory_movements_inventory_id");
+
+                    b.HasIndex("OccurredAtUtc")
+                        .HasDatabaseName("ix_inventory_movements_occurred_at_utc");
+
+                    b.HasIndex("ProductIdentifier")
+                        .HasDatabaseName("ix_inventory_movements_product_identifier");
+
+                    b.HasIndex("SupplierId")
+                        .HasDatabaseName("ix_inventory_movements_supplier_id");
+
+                    b.ToTable("inventory_movements", (string)null);
+                });
+
             modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Product", b =>
                 {
                     b.Property<Guid>("PersistenceId")
@@ -71,6 +255,193 @@ namespace SistemaInventarioVentas.Infrastructure.Persistence.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("products", (string)null);
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Sale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ConfirmedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerReference")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("ix_sales_created_at_utc");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_sales_customer_id");
+
+                    b.HasIndex("CustomerReference")
+                        .HasDatabaseName("ix_sales_customer_reference");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_sales_status");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_sales_user_id");
+
+                    b.ToTable("sales", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_sales_subtotal_non_negative", "\"Subtotal\" >= 0");
+
+                            t.HasCheckConstraint("ck_sales_tax_amount_non_negative", "\"TaxAmount\" >= 0");
+
+                            t.HasCheckConstraint("ck_sales_total_non_negative", "\"Total\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.SaleDetail", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("ProductIdentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SaleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductIdentifier")
+                        .HasDatabaseName("ix_sale_details_product_identifier");
+
+                    b.HasIndex("SaleId")
+                        .HasDatabaseName("ix_sale_details_sale_id");
+
+                    b.HasIndex("SaleId", "ProductIdentifier")
+                        .IsUnique()
+                        .HasDatabaseName("ux_sale_details_sale_id_product_identifier");
+
+                    b.ToTable("sale_details", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_sale_details_quantity_positive", "\"Quantity\" > 0");
+
+                            t.HasCheckConstraint("ck_sale_details_subtotal_non_negative", "\"Subtotal\" >= 0");
+
+                            t.HasCheckConstraint("ck_sale_details_tax_amount_non_negative", "\"TaxAmount\" >= 0");
+
+                            t.HasCheckConstraint("ck_sale_details_tax_rate_non_negative", "\"TaxRate\" >= 0");
+
+                            t.HasCheckConstraint("ck_sale_details_total_non_negative", "\"Total\" >= 0");
+
+                            t.HasCheckConstraint("ck_sale_details_unit_price_non_negative", "\"UnitPrice\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Supplier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("Email");
+
+                    b.Property<string>("EmailKey")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasComputedColumnSql("lower(\"Email\")", true);
+
+                    b.Property<string>("IdentificationNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("IdentificationNumberKey")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasComputedColumnSql("upper(\"IdentificationNumber\")", true);
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdentificationNumberKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_suppliers_identification_number_key");
+
+                    b.ToTable("suppliers", (string)null);
                 });
 
             modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.User", b =>
@@ -111,6 +482,20 @@ namespace SistemaInventarioVentas.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.InventoryMovement", b =>
+                {
+                    b.HasOne("SistemaInventarioVentas.Domain.Entities.Inventory", null)
+                        .WithMany("Movements")
+                        .HasForeignKey("InventoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SistemaInventarioVentas.Domain.Entities.Supplier", null)
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Product", b =>
                 {
                     b.HasOne("SistemaInventarioVentas.Domain.Entities.Category", "Category")
@@ -148,9 +533,36 @@ namespace SistemaInventarioVentas.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Sale", b =>
+                {
+                    b.HasOne("SistemaInventarioVentas.Domain.Entities.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.SaleDetail", b =>
+                {
+                    b.HasOne("SistemaInventarioVentas.Domain.Entities.Sale", null)
+                        .WithMany("Details")
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Inventory", b =>
+                {
+                    b.Navigation("Movements");
+                });
+
+            modelBuilder.Entity("SistemaInventarioVentas.Domain.Entities.Sale", b =>
+                {
+                    b.Navigation("Details");
                 });
 #pragma warning restore 612, 618
         }

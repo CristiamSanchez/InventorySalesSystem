@@ -45,6 +45,8 @@ public sealed class ApiTestFixture : IAsyncLifetime
 
     public string JwtSigningKey => _jwtSigningKey;
 
+    public HttpClient CreateClient() => _factory!.CreateClient();
+
     public async Task DisposeAsync()
     {
         Client.Dispose();
@@ -56,8 +58,15 @@ public sealed class ApiTestFixture : IAsyncLifetime
     {
         Client.DefaultRequestHeaders.Authorization = null;
         await using var dbContext = CreateDbContext();
+        await dbContext.SaleDetails.ExecuteDeleteAsync();
+        await dbContext.Sales.ExecuteDeleteAsync();
+        await dbContext.InventoryMovements.ExecuteDeleteAsync();
+        await dbContext.Inventories.ExecuteDeleteAsync();
+        await dbContext.Customers.ExecuteDeleteAsync();
+        await dbContext.Suppliers.ExecuteDeleteAsync();
         await dbContext.Products.ExecuteDeleteAsync();
         await dbContext.Categories.ExecuteDeleteAsync();
+        await dbContext.AuditEvents.ExecuteDeleteAsync();
         await dbContext.Users.ExecuteDeleteAsync();
     }
 

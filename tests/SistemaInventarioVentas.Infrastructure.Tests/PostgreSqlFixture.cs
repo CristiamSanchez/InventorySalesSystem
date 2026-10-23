@@ -34,7 +34,14 @@ public sealed class PostgreSqlFixture : IAsyncLifetime
     public async Task ClearAsync()
     {
         await using var dbContext = CreateDbContext();
+        await dbContext.AuditEvents.ExecuteDeleteAsync();
+        await dbContext.SaleDetails.ExecuteDeleteAsync();
+        await dbContext.Sales.ExecuteDeleteAsync();
+        await dbContext.InventoryMovements.ExecuteDeleteAsync();
+        await dbContext.Inventories.ExecuteDeleteAsync();
         await dbContext.Users.ExecuteDeleteAsync();
+        await dbContext.Customers.ExecuteDeleteAsync();
+        await dbContext.Suppliers.ExecuteDeleteAsync();
         await dbContext.Products.ExecuteDeleteAsync();
         await dbContext.Categories.ExecuteDeleteAsync();
     }

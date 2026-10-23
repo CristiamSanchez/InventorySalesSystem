@@ -985,7 +985,121 @@ Database or ORM implementation details remain separate and intentionally deferre
 
 The architecture should describe the required business outcome without assuming any specific storage technology.
 
-## 13. Consistency with the existing domain model and business rules
+## 13. Audit capability architecture and boundaries
+
+Preserving accountability across material business actions and privileged operations is an architectural concern that cuts across multiple domains while adhering strictly to Clean Architecture boundaries.
+
+### 13.1 Operational event scope and purpose
+
+The audit trail records state-changing operations and privileged access events. It exists to provide an immutable record of what occurred, who initiated it, when it happened, and what business record was affected.
+- Core event scope:
+  - Sales lifecycle: creation (`SaleCreated`), confirmation (`SaleConfirmed`), and cancellation (`SaleCancelled`).
+  - Inventory operations: movement recording (`InventoryMovementRecorded` across Entry, Exit, and Adjustment).
+  - Entity lifecycle transitions: activation and deactivation of products (`ProductActivated`, `ProductDeactivated`), suppliers (`SupplierActivated`, `SupplierDeactivated`), customers (`CustomerActivated`, `CustomerDeactivated`), and users (`UserActivated`, `UserDeactivated`).
+  - Security & authentication events: login success (`UserLoginSucceeded`) and failed login attempts (`UserLoginFailed`).
+- Scope exclusions:
+  - Read and query operations (e.g., retrieving lists, viewing details, running reports) do not generate audit events. Query-level auditing would cause unacceptable write amplification, storage bloat, and database performance degradation.
+
+### 13.2 Layer responsibilities for audit
+
+Audit capability follows Clean Architecture layers without introducing third-party frameworks:
+1. Domain:
+   - Owns the `AuditEvent` entity with identity (`Id`), event category (`EventType`), affected entity name (`EntityName`), optional record reference (`EntityId`), optional actor reference (`UserId`), UTC timestamp (`OccurredAtUtc`), and structured payload (`MetadataJson`).
+   - Enforces immutability: once created, an `AuditEvent` cannot be updated or deleted.
+2. Application:
+   - Defines the `IAuditRepository` abstraction (`InsertAsync`, `GetByIdAsync`, `ListAsync`) and query model `AuditQuery`.
+   - Coordinates audit record creation inside application use cases (e.g. `SaleUseCases`, `InventoryUseCases`, `SupplierUseCases`) alongside aggregate state modifications.
+   - Extracts the authenticated user identity via `ICurrentUser` for user-initiated actions, or sets `UserId = null` with explicit metadata provenance for system/unauthenticated actions.
+3. Infrastructure:
+   - Implements `IAuditRepository` using EF Core and PostgreSQL.
+   - Maps the `audit_events` relational table with indexed lookup columns (`OccurredAtUtc`, `EventType`, `EntityName`, `UserId`).
+   - Enforces append-only storage semantics at the repository and database level.
+4. API:
+   - Exposes read-only administrative endpoints (`GET /api/audit`, `GET /api/audit/{id}`) guarded by role-based authorization (`Admin` only).
+   - Maps internal audit models to `AuditEventResponse` DTOs.
+
+### 13.3 Transactional guarantees (In-band vs. Out-of-band)
+
+- In-band transactional auditing: For all state-modifying business operations (sales confirmation, inventory movements, status updates), the audit record must be written within the same database transaction as the business entity changes.
+  - If the business operation rolls back (e.g., due to OCC conflict or invalid business state), the audit record also rolls back. This prevents phantom audit events for actions that were never committed.
+- Out-of-band / immediate auditing: Standalone authentication events (`UserLoginSucceeded`, `UserLoginFailed`) do not mutate domain aggregates and are committed independently upon attempt evaluation.
+
+### 13.4 Security and data protection
+
+- Sensitive credentials must never be written to audit logs: Passwords, password hashes, JWT access tokens, encryption keys, and payment credentials are strictly forbidden from `MetadataJson` and all audit properties (`NFR-SEC-003`, `NFR-OBS-003`).
+- Failed authentication events capture the attempted username and client context, but never the user-supplied password string.
+
+### 13.5 Deferred audit capabilities
+
+To avoid speculative complexity, the following remain deferred:
+- Event Sourcing: The system maintains an append-only audit trail alongside a state-based relational database; domain state is never reconstructed from audit events.
+- Asynchronous event streaming and message brokers (Kafka, RabbitMQ, outbox pattern): Audit writes are performed synchronously within the database transaction.
+- Third-party audit frameworks: Direct lightweight EF Core mapping satisfies all requirements without external dependency overhead.
+- Log retention, partition rotation, and cold-storage archiving policies.
+
+## 14. Reporting architecture and read-model boundaries
+
+Operational reporting provides business visibility across sales performance, product revenue contributions, stock levels, and inventory movements while preserving Clean Architecture boundaries and protecting transactional performance.
+
+### 14.1 Operational report scope and read models
+
+Reports are structured read projections computed directly from operational relational data:
+- **Sales Summary & History Report (`GET /api/reports/sales-summary`)**:
+  - Summarizes transaction counts, confirmed sale counts, aggregated subtotals, tax collected, and gross revenue over a specified date range (`FromUtc`, `ToUtc`), with optional filters for `CustomerId`, `UserId`, and `SaleStatus`.
+  - Lists matching sales transactions with item counts and monetary totals.
+  - **Calculation rule**: Revenue and financial metrics strictly aggregate `Confirmed` sales (`BR-REP-004`). `Draft` and `Cancelled` sales are counted separately if included by filter, but never added to realized revenue.
+- **Product Sales Performance Report (`GET /api/reports/product-sales`)**:
+  - Analyzes product sales volume and monetary contributions across products and categories over a date range.
+  - **Calculation rule**: Aggregates units sold, line subtotals, line taxes, and line totals exclusively from immutable `sale_details` snapshots where the parent sale is `Confirmed` (`BR-REP-005`).
+- **Inventory Stock Status Report (`GET /api/reports/inventory-status`)**:
+  - Provides a comprehensive operational snapshot of on-hand inventory across catalog products, identifying total units on hand, in-stock products (`Quantity > 0`), and out-of-stock products (`Quantity == 0` or missing inventory record).
+  - **Calculation rule**: Registered catalog products without an initialized inventory record are reported with available stock zero and `HasInventoryRecord = false` (`BR-REP-006`).
+- **Inventory Movement Traceability Report (`GET /api/reports/inventory-movements`)**:
+  - Cross-product warehouse movement audit trail detailing entries, exits, and adjustments over date ranges, product identifiers, and supplier snapshots.
+- **Audit Reporting Candidate Evaluation**:
+  - The existing administrative endpoints `GET /api/audit` and `GET /api/audit/{id}` already provide complete, filtered access to audit records across event types, entities, actors, and date ranges.
+  - A duplicate "Audit Report" is explicitly rejected to avoid redundant endpoints and maintain lean API boundaries (`Principle 5`, `Principle 6`).
+
+### 14.2 Clean Architecture layer responsibilities for reporting
+
+Reporting follows strict read-model boundaries without disrupting core domain aggregates:
+1. **Domain Layer**:
+   - Remains completely unchanged. Reports are read projections, not transactional domain aggregates. No domain logic, state mutations, or speculative entities are introduced.
+2. **Application Layer**:
+   - Defines reporting contracts (`IReportingRepository` or report use case contracts), query parameter objects (`SalesSummaryReportQuery`, `ProductSalesReportQuery`, `InventoryStatusReportQuery`, `InventoryMovementReportQuery`), and read DTOs.
+   - Enforces query parameter validation (e.g., `FromUtc <= ToUtc`).
+3. **Infrastructure Layer**:
+   - Implements reporting contracts using EF Core and PostgreSQL (`CatalogDbContext`).
+   - Executes read-only queries with `.AsNoTracking()` and database-level aggregations (`SUM`, `COUNT`, `GROUP BY`) utilizing existing relational indexes (`ix_sales_created_at_utc`, `ix_sales_status`, `ix_sales_customer_id`, `ix_sale_details_sale_id`, `ix_sale_details_product_identifier`, `ix_inventory_movements_occurred_at_utc`, `ix_inventory_movements_product_identifier`, `ix_inventory_movements_supplier_id`).
+4. **API Layer**:
+   - Exposes Minimal API endpoints under `/api/reports` returning typed DTOs and ProblemDetails error responses.
+
+### 14.3 Role-based authorization matrix
+
+- **Financial and Revenue Reports (`sales-summary`, `product-sales`)**: Restricted to Admin users (`RequireAuthorization("AdminOnly")`) to safeguard sensitive commercial revenue figures.
+- **Operational Inventory Reports (`inventory-status`, `inventory-movements`)**: Accessible to both `User` and `Admin` roles for regular warehouse and catalog operations.
+
+### 14.4 Performance, isolation, and data protection
+
+- **Zero Side Effects**: Reporting operations are strictly read-only and never mutate entity state or acquire persistent transaction locks.
+- **Zero Audit Bloat**: In accordance with `BR-AUD-004` and `BR-REP-007`, reporting queries do not generate audit events.
+- **No Tracking Overhead**: All reporting queries execute with `.AsNoTracking()` to eliminate EF Core change tracking overhead and minimize memory consumption.
+- **Operational Database Querying**: Queries execute against the primary PostgreSQL database, which is fully sufficient for current operational scales without requiring an external reporting replica.
+
+### 14.5 Explicit data and calculation limitations
+
+- **Missing Product Cost**: The `Product` entity does not track purchase/cost price. Therefore, Gross Margin, Net Margin, Markup %, and Cost of Goods Sold (COGS) are NOT supported. Reports strictly present gross revenue and tax amounts.
+- **Missing Stock Thresholds**: Neither `Product` nor `Inventory` tracks minimum stock or reorder points. Therefore, automated reorder alerts and low-stock warnings are NOT supported; stock status is strictly binary (`InStock` vs. `OutOfStock`).
+- **Missing Inventory Valuation**: Financial asset valuation of stock on hand is NOT supported without cost data.
+- **Missing Sales Returns**: Sales cancellations for confirmed sales without inventory reversal are rejected, and credit notes/returns do not exist. Therefore net revenue equals confirmed gross sales.
+
+### 14.6 Deferred reporting capabilities
+
+- Report export to binary formats (PDF, Excel, CSV) is deferred to future presentation/client enhancements; the API provides structured JSON.
+- Asynchronous report generation, background job queues, and scheduled email dispatch remain deferred.
+- Dedicated reporting databases, OLAP data warehouses, read replicas, and materialized views remain deferred until operational traffic justifies them.
+
+## 15. Consistency with the existing domain model and business rules
 
 These decisions are consistent with the existing domain model and business rules:
 
@@ -996,14 +1110,16 @@ These decisions are consistent with the existing domain model and business rules
 
 This is consistent with the project’s goal of preserving business integrity while keeping the technical execution of the workflow separate from the meaning of the business event.
 
-## 14. Deferred decisions
+## 16. Deferred decisions
 
 The architecture and business-boundary phases intentionally did not decide the following. Later technical-stack decisions have since selected C#/.NET 10, ASP.NET Core Minimal APIs, PostgreSQL, and Entity Framework Core; the remaining implementation decisions are:
 
-- database schema
+- database schema for deferred features
 - transaction API choices
 - isolation levels or locking strategy
 - exact concurrency-control implementation
-- specific queue, event, or integration pattern for asynchronous processing
+- specific queue, event, or integration pattern for asynchronous processing (audit writes are synchronous and in-band)
+- audit retention and partition pruning policies
+- dedicated reporting data warehouse, read replicas, or background document export services
 
 These details remain deferred and must preserve the approved business transaction model and architecture.

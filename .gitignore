@@ -1,0 +1,104 @@
+# ==============================================================================
+# .gitignore for SistemaInventarioVentas (.NET 10 + Angular 22 + PostgreSQL)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# .NET / C# Build Artifacts
+# ------------------------------------------------------------------------------
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+out/
+build/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.pidb
+*.booproj
+*.svclog
+
+# Visual Studio / Rider / Omnisharp
+.vs/
+.idea/
+*.DotSettings.user
+_ReSharper*/
+*.rsuser
+
+# Test & Coverage Outputs
+TestResults/
+[Tt]est[Rr]esults/
+*.coverage
+*.coveragexml
+coverage/
+*.lcov
+
+# ------------------------------------------------------------------------------
+# Node / Angular Frontend
+# ------------------------------------------------------------------------------
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+frontend/.angular/cache/
+.angular/
+frontend/tmp/
+tmp/
+frontend/out-tsc/
+out-tsc/
+frontend/bazel-out/
+bazel-out/
+
+# NPM / Yarn / Package Manager Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ------------------------------------------------------------------------------
+# Environment Variables, Secrets & Credentials
+# ------------------------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+!scripts/*.env.example
+appsettings.Production.json
+appsettings.*.local.json
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+secrets.json
+
+# ------------------------------------------------------------------------------
+# Databases & Local Storage
+# ------------------------------------------------------------------------------
+postgres_data/
+postgres-data/
+*.db
+*.sqlite
+*.sqlite3
+
+# ------------------------------------------------------------------------------
+# Operating System & Editor Files
+# ------------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+*.bak
+
+# VS Code specific (allow settings/tasks/launch, ignore local workspace state)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
